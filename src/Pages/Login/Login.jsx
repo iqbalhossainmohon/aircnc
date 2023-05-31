@@ -1,30 +1,63 @@
-import { Link, useNavigate } from 'react-router-dom'
-import { FcGoogle } from 'react-icons/fc'
-import { useContext } from 'react'
-import { AuthContext } from '../../providers/AuthProvider'
-import { toast } from 'react-hot-toast'
-import { TbFidgetSpinner } from 'react-icons/tb'
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { FcGoogle } from 'react-icons/fc';
+import { useContext, useRef } from 'react';
+import { AuthContext } from '../../providers/AuthProvider';
+import { toast } from 'react-hot-toast';
+import { TbFidgetSpinner } from 'react-icons/tb';
 
 const Login = () => {
 
     const { loading, setLoading, signIn, signInWithGoogle, resetPassword } = useContext(AuthContext);
     const navigate = useNavigate();
+    const location = useLocation();
+    const from = location.state?.from?.pathname || '/'
+    const emailRef = useRef();
 
     // Handle Email & Password base Login
-    
+    const handleLogin = (event) => {
+        event.preventDefault();
+        const email = event.target.email.value;
+        const password = event.target.password.value;
+        signIn(email, password)
+            .then(result => {
+                console.log(result.user);
+                navigate(from, {replace: true});
+            })
+            .then(error => {
+                setLoading(false);
+                console.log(error.message);
+                toast.error(error.message);
+            })
+    }
 
     // Handle Google SignIn
-    const handleGoogleSignIn = ()=>{
+    const handleGoogleSignIn = () => {
         signInWithGoogle()
-        .then(result =>{
-            console.log(result.user);
-            navigate('/');
-        })
-        .then(error =>{
-            setLoading(false);
-            console.log(error.message);
-            toast.error(error.message);
-        })
+            .then(result => {
+                console.log(result.user);
+                navigate(from, {replace: true});
+            })
+            .then(error => {
+                setLoading(false);
+                console.log(error.message);
+                toast.error(error.message);
+            })
+    }
+
+    // handle Forgot password
+    const handleForgetPassword = () => {
+        const email = emailRef.current.value;
+        resetPassword(email)
+            .then(() => {
+                toast.success('Please check your email for reset link')
+                setLoading(false);
+            })
+            .then(error => {
+                setLoading(false);
+                console.log(error.message);
+                toast.error(error.message);
+            })
+
     }
 
     return (
@@ -37,6 +70,7 @@ const Login = () => {
                     </p>
                 </div>
                 <form
+                    onSubmit={handleLogin}
                     noValidate=''
                     action=''
                     className='space-y-6 ng-untouched ng-pristine ng-valid'
@@ -47,6 +81,7 @@ const Login = () => {
                                 Email address
                             </label>
                             <input
+                                ref={emailRef}
                                 type='email'
                                 name='email'
                                 id='email'
@@ -78,14 +113,14 @@ const Login = () => {
                             type='submit'
                             className='bg-rose-500 w-full rounded-md py-3 text-white'
                         >
-                            {loading? (<TbFidgetSpinner className='m-auto animate-spin' size={24} />
-                            ) : 
-                            ('Continue')}  
+                            {loading ? <TbFidgetSpinner className='m-auto animate-spin' size={24} />
+                                :
+                                'Continue'}
                         </button>
                     </div>
                 </form>
                 <div className='space-y-1'>
-                    <button className='text-xs hover:underline hover:text-rose-500 text-gray-400'>
+                    <button onClick={handleForgetPassword} className='text-xs hover:underline hover:text-rose-500 text-gray-400'>
                         Forgot password?
                     </button>
                 </div>
@@ -99,9 +134,9 @@ const Login = () => {
 
                 {/* Login with Google accounts */}
                 <div onClick={handleGoogleSignIn}
-                 className='flex justify-center items-center space-x-2 border m-3 p-2 border-gray-300 border-rounded cursor-pointer'>
+                    className='flex justify-center items-center space-x-2 border m-3 p-2 border-gray-300 border-rounded cursor-pointer'>
                     <FcGoogle size={32} />
-                        <p>Continue with Google</p>
+                    <p>Continue with Google</p>
                 </div>
 
 
